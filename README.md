@@ -1,81 +1,148 @@
-ELECTION-results-2024.
-# ELECTION-results-2024
+# 🗳️ ELECTION RESULTS 2024 ANALYSIS  
+**Author:** Tushar Kanojiya  
+📧 **Contact:** [tkanojiya83@gmail.com](mailto:tkanojiya83@gmail.com)
 
-A project to analyze and visualize election results data using SQL and Power BI.  
+---
 
-## Table of Contents
+## 📘 Table of Contents
 
 1. [Project Overview](#project-overview)  
 2. [Data Source](#data-source)  
-3. [Database / SQL Workflow](#database--sql-workflow)  
-   - Schema / Tables  
-   - ETL / Data Cleaning / Ingestion  
-   - Sample Queries  
-4. [Power BI Workflow & Visualization](#power-bi-workflow--visualization)  
-   - Data Modeling  
-   - Measures / Calculations  
-   - Visuals / Reports  
-5. [How to Run / Reproduce](#how-to-run--reproduce)  
-6. [Folder / File Structure](#folder--file-structure)  
-7. [Future Enhancements](#future-enhancements)  
-8. [Contact](#contact)  
+3. [SQL Workflow](#sql-workflow)  
+4. [SQL Queries (Basic, Intermediate, Advanced)](#sql-queries-basic-intermediate-advanced)  
+5. [Power BI Workflow (Step-by-Step)](#power-bi-workflow-step-by-step)  
+6. [Key Insights](#key-insights)  
+7. [How to Run](#how-to-run)  
+8. [Folder Structure](#folder-structure)  
+9. [Future Enhancements](#future-enhancements)  
+10. [Contact](#contact)
 
 ---
 
-## Project Overview
+## 🧾 Project Overview
 
-This repository contains code, SQL scripts, and Power BI files to analyze election results data (e.g. vote counts, constituencies, parties, candidates). The goal is to clean, transform, and model the data, and then visualize insights such as:
-
-- Total votes per party, per constituency  
-- Trends over time (if multi-year)  
-- Comparative performance  
-- Maps / geographical visualizations (if available)  
+This project analyzes and visualizes **India’s 2024 Election Results** using **SQL** for data processing and **Power BI** for interactive dashboards.  
+It reveals insights on **party performance**, **winning margins**, **vote share**, and **regional strengths**.
 
 ---
 
-## Data Source
+## 📂 Data Source
 
-- Original raw data (CSV, Excel, or other) containing election results by constituency, candidates, party, votes, etc.  
-- Metadata (e.g. constituency names, region, party lookup tables)  
-- Any lookup tables or reference data used  
+The dataset includes:
+- Candidate names and parties  
+- Total votes received  
+- Constituency and state details  
+- Winner and runner-up information  
 
-*Note: Ensure that any private or sensitive data is handled appropriately.*
+Data was initially in **CSV/Excel** format and imported into **SQL** for analysis.
 
 ---
 
-## Database / SQL Workflow
+## 🧠 SQL Workflow
 
-Below is an outline of the steps in the SQL / database side of the project:
+### 🪜 Steps Performed in SQL
 
-### Schema / Tables
+1. **Data Import**  
+   - Imported the dataset into SQL tables using `LOAD DATA INFILE` or `INSERT INTO`.
 
-You might have tables such as:
+2. **Data Cleaning**  
+   - Removed duplicates and null entries using `DISTINCT`, `DELETE`, and `COALESCE()`.  
+   - Standardized column names and text formatting using `TRIM()` and `UPPER()`.
 
-- `Constituency` (constituency_id, name, state, region, etc.)  
-- `Party` (party_id, name, abbreviation, etc.)  
-- `Candidate` (candidate_id, name, party_id, etc.)  
-- `ElectionResult` (result_id, constituency_id, candidate_id, votes, year, etc.)  
-- Lookup or dimension tables as needed  
+3. **Data Transformation**  
+   - Created new calculated fields for **vote share** and **margin**.  
+   - Used **joins** to merge Candidate, Party, and Constituency data.  
+   - Implemented **window functions** (`RANK()`, `DENSE_RANK()`) to identify winners.
 
-### ETL / Data Cleaning / Ingestion
+4. **Data Analysis**  
+   - Aggregated total votes by party and state.  
+   - Calculated **percentage margins** and **ranking**.  
+   - Exported cleaned data to Power BI for visualization.
 
-1. **Load raw data** — import CSV or Excel files into staging tables.  
-2. **Clean data** — handle missing values, correct data types, trim whitespace, unify naming conventions.  
-3. **Transform** — join with lookup tables (e.g. map party names to party_id), compute derived columns (vote share, ranking, margins).  
-4. **Load into final schema** — populate the normalized tables (Constituency, Party, Candidate, ElectionResult).  
-5. **Indexing / constraints** — add primary keys, foreign keys, indexes for query performance.
+---
 
-### Sample Queries & Analyses
+## 🧩 SQL Queries (Basic, Intermediate, Advanced)
 
-Here are examples of queries you might use:
+### 🟢 Basic Queries
 
-- **Total votes per party in a state**  
-  ```sql
-  SELECT p.name AS party_name, SUM(er.votes) AS total_votes
-  FROM ElectionResult er
-    JOIN Candidate c ON er.candidate_id = c.candidate_id
-    JOIN Party p ON c.party_id = p.party_id
-    JOIN Constituency co ON er.constituency_id = co.constituency_id
-  WHERE co.state = 'Maharashtra'
-  GROUP BY p.name
-  ORDER BY total_votes DESC;
+| **Purpose** | **SQL Query** | **Functions / Concepts** | **Description** |
+|--------------|---------------|---------------------------|-----------------|
+| Total Votes by Party | ```sql SELECT party_name, SUM(total_votes) AS Total_Votes FROM election_data GROUP BY party_name ORDER BY Total_Votes DESC; ``` | `SUM()`, `GROUP BY`, `ORDER BY` | Summarizes total votes secured by each party. |
+| List Candidates by Constituency | ```sql SELECT constituency_name, candidate_name, party_name FROM election_data ORDER BY constituency_name; ``` | `ORDER BY` | Lists all candidates contesting in each constituency. |
+| Constituency Count per State | ```sql SELECT state_name, COUNT(DISTINCT constituency_name) AS Total_Seats FROM election_data GROUP BY state_name; ``` | `COUNT(DISTINCT)` | Counts the total constituencies per state. |
+
+---
+
+### 🟡 Intermediate Queries
+
+| **Purpose** | **SQL Query** | **Functions / Concepts** | **Description** |
+|--------------|---------------|---------------------------|-----------------|
+| Winner per Constituency | ```sql SELECT constituency_name, candidate_name AS Winner, party_name, MAX(total_votes) AS Votes FROM election_data GROUP BY constituency_name; ``` | `MAX()`, `GROUP BY` | Identifies top-voted candidates per constituency. |
+| State-wise Party Performance | ```sql SELECT state_name, party_name, SUM(total_votes) AS Total_Votes FROM election_data GROUP BY state_name, party_name ORDER BY state_name, Total_Votes DESC; ``` | `GROUP BY`, `ORDER BY` | Displays party performance per state. |
+| Vote Share per Candidate | ```sql SELECT constituency_name, candidate_name, (total_votes * 100.0 / SUM(total_votes) OVER (PARTITION BY constituency_name)) AS Vote_Percentage FROM election_data; ``` | `SUM() OVER()`, `PARTITION BY` | Calculates candidate’s vote share per constituency. |
+
+---
+
+### 🔴 Advanced Queries
+
+| **Purpose** | **SQL Query** | **Functions / Concepts** | **Description** |
+|--------------|---------------|---------------------------|-----------------|
+| Winner vs Runner-up with Margin | ```sql SELECT A.constituency_name, A.candidate_name AS Winner, B.candidate_name AS Runner_Up, (A.total_votes - B.total_votes) AS Margin FROM (SELECT *, RANK() OVER (PARTITION BY constituency_name ORDER BY total_votes DESC) AS rnk FROM election_data) A JOIN (SELECT *, RANK() OVER (PARTITION BY constituency_name ORDER BY total_votes DESC) AS rnk FROM election_data) B ON A.constituency_name = B.constituency_name WHERE A.rnk = 1 AND B.rnk = 2; ``` | `RANK()`, `JOIN`, `PARTITION BY` | Finds the top 2 candidates and computes their vote margin. |
+| Party with Highest Winning Margin | ```sql SELECT party_name, MAX(total_votes - LAG(total_votes) OVER (PARTITION BY constituency_name ORDER BY total_votes DESC)) AS Highest_Margin FROM election_data GROUP BY party_name ORDER BY Highest_Margin DESC; ``` | `LAG()`, `OVER()`, `MAX()` | Finds which party achieved the largest winning margin. |
+| Comparative Vote Analysis | ```sql SELECT constituency_name, SUM(CASE WHEN party_name = 'PartyA' THEN total_votes ELSE 0 END) AS PartyA_Votes, SUM(CASE WHEN party_name = 'PartyB' THEN total_votes ELSE 0 END) AS PartyB_Votes FROM election_data GROUP BY constituency_name; ``` | `CASE WHEN`, `SUM()` | Compares votes between two parties in each constituency. |
+
+---
+
+## 📊 Power BI Workflow (Step-by-Step)
+
+1. **Data Connection**  
+   - Connected Power BI to SQL database.  
+   - Imported tables: `Candidate`, `Party`, `Constituency`, `ElectionResults`.
+
+2. **Data Cleaning (Power Query)**  
+   - Removed nulls, duplicates, and renamed columns.  
+   - Ensured correct data types for all numeric fields.
+
+3. **Data Modeling**  
+   - Established relationships between tables:  
+     - `ElectionResults[party_id] → Party[party_id]`  
+     - `ElectionResults[candidate_id] → Candidate[candidate_id]`  
+     - `ElectionResults[constituency_id] → Constituency[constituency_id]`  
+   - Built a **Star Schema** for efficiency.
+
+4. **DAX Measures**  
+   - `Total Votes = SUM(ElectionResults[votes])`  
+   - `Vote Share % = DIVIDE(SUM(ElectionResults[votes]), CALCULATE(SUM(ElectionResults[votes]), ALLEXCEPT(ElectionResults, ElectionResults[Constituency]))) * 100`  
+   - `Winning Margin = [Top Candidate Votes] - [Runner-up Votes]`  
+   - `Seats Won = DISTINCTCOUNT(Winning Constituencies)`
+
+5. **Dashboard Design**  
+   - **Bar Chart:** Party-wise total votes  
+   - **Pie Chart:** Vote share percentage  
+   - **Map Visual:** State-wise party performance  
+   - **Table Visual:** Candidate-wise detailed view  
+   - Added **slicers** for Year, Party, and State.
+
+6. **Formatting & Publishing**  
+   - Added tooltips, color themes, and data labels.  
+   - Published final dashboard to **Power BI Service** for sharing.
+
+---
+
+## 💡 Key Insights
+
+1. 🏆 **Top Performing Party:** Identified the party with maximum total votes nationwide.  
+2. 📊 **Vote Share Patterns:** Revealed clear dominance regions for major parties.  
+3. ⚖️ **Close Contests:** Highlighted constituencies where the margin < 1000 votes.  
+4. 🗺️ **State-Level Trends:** Displayed which parties led in specific regions.  
+5. 📈 **Performance Comparison:** Tracked vote growth and losses compared to previous elections (if data available).  
+6. 💬 **Interactive Dashboard:** Enabled users to explore data dynamically through Power BI filters.
+
+---
+
+## 🧰 How to Run
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Tushar-kanojiya-4002/ELECTION-results-2024.git
+
